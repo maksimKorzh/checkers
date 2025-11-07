@@ -1,0 +1,160 @@
+<html lang="en" style="touch-action: none;">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <base href="bangladesh-checkers">
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; background-color: white; }
+      body { padding: 0px; margin: 0px; font-family: monospace; font-size: 20px; background-color: white; }
+      button { width: 100%; height: 80px; font-size: inherit; font-family: inherit; background-color: white; color: black; }
+      .highlight { box-shadow: inset 0px 0px 20px 20px #ff3300; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container" style="display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%;">
+      <div id="board"></div>
+      <div id="buttons" style="display: flex; justify-content: center; gap: 1px; margin-top: 10px;">
+        <button onclick="window.location.reload();">Play</button>
+        <button onclick="ai ^= 1; alert('AI is now ' + (ai ? 'on' : 'off'));">AI</button>
+        <button id="undo">Undo</button>
+        <button id="move">Move</button>
+        <button id="flip">Flip</button>
+      </div>
+    </div>
+    <script>
+      let width = window.innerWidth > window.innerHeight ? window.innerHeight : window.innerWidth;
+      let size = parseInt(width / (window.innerWidth > window.innerHeight ? 10 : 5 ));
+      let radius = size / 3;
+
+      let whiteMan = `
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="white circle">
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius}" 
+            fill="#f6f9f5" 
+            stroke="black" 
+            stroke-width="2"
+          />
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius-(radius/2)}" 
+            fill="none" 
+            stroke="black" 
+            stroke-width="2"
+          />
+        </svg>`;
+
+      let redMan = `
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="black circle">
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius}" 
+            fill="#e52818" 
+            stroke="black" 
+            stroke-width="2"
+          />
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius-(radius/2)}" 
+            fill="none" 
+            stroke="black" 
+            stroke-width="2"
+          />
+        </svg>`;
+
+      let redKing = `
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="black circle">
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius}" 
+            fill="#e52818" 
+            stroke="#222" 
+            stroke-width="6"
+          />
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius-(radius/2)}" 
+            fill="none" 
+            stroke="#222" 
+            stroke-width="6"
+          />
+        </svg>`;
+
+      let whiteKing = `
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="black circle">
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius}" 
+            fill="#f6f9f5" 
+            stroke="#222" 
+            stroke-width="6"
+          />
+          <circle 
+            cx="${size / 2}" 
+            cy="${size / 2}" 
+            r="${radius-(radius/2)}" 
+            fill="none" 
+            stroke="#222" 
+            stroke-width="6"
+          />
+        </svg>`;
+
+      board = [
+        0, 2, 0, 2, 0, 2, 0, 2,  0, 0, 0, 0, 0, 0, 0, 0,
+        2, 0, 2, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2, 0, 2, 0, 2, 0, 2,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 1, 0, 1, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 0, 1, 0, 1, 0, 1,  0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 1, 0, 1, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+      ];
+        
+      var side = 1;
+      var clickLock = 0;
+      var flip = 0;
+      var userSrc, userDst;
+      var legalMoves = [];
+      var gameMoves = [];
+      var gameOver = 0;
+      var ai = 1;
+      
+      function drawBoard() {
+        let boardHTML = `<table align="center" cellspacing="0" `;
+        boardHTML += `style=" -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;`;
+        boardHTML += `user-select: none; -o-user-select: none;`;
+        boardHTML += `unselectable="on" onselectstart="return false;" onmousedown="return false;"`;
+        for (let row = 0; row < 8; row++) {
+          boardHTML+= '<tr>';
+          for (let col = 0; col < 16; col++) {
+            let file, rank;
+            if (flip) {
+              file = 16-1-col;
+              rank = 8-1-row;
+            } else {
+              file = col;
+              rank = row;
+            }
+            let sq = rank * 16 + file;
+            if (sq & 0x88) continue;
+            boardHTML+= '<td align="center" id="' + sq +
+                 '"bgcolor="#' + ( ((col + row) % 2) ? '59aa67' : 'eef2e1') +
+                 '" style="width: ' + size + 'px; height: ' + size + 'px; padding: 0px; font-size: ' + (size/2) + 'px; border: 1px solid black;"' +
+                 ' onclick="userMove(this.id)">' + ['<span style=\'visibility:hidden\'>' + redMan + '</span>', redMan, whiteMan, redKing, whiteKing][board[sq]] +
+                 '</td>';
+          } boardHTML+= '</tr>';
+        } boardHTML+= '</table>';
+        document.getElementById('board').innerHTML = boardHTML;
+        document.getElementById('buttons').style.width = (document.getElementById('board').offsetWidth) + 'px';
+        //setTimeout(function() { isGameOver(); }, 200);
+      } drawBoard();
+    </script>
+  </body>
+</html>
