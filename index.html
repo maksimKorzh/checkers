@@ -122,9 +122,9 @@
         0, 0, 2, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 5, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 2, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
       ];
 
@@ -137,12 +137,13 @@
           [-15, -17, 15, 17],
       ];
       
-      var side = 1;
+      var side = 2;
       var clickLock = 0;
       var flip = 0;
       var userSrc, userDst;
       var legalMoves = [];
       var gameMoves = [];
+      var currentSequence = {};
       var gameOver = 0;
       var ai = 1;
       
@@ -193,6 +194,8 @@
         let sequences = [];
         for (let cap of captures) {
           makeMove(cap);
+          printBoard();
+          console.log(sequences);
           let subCaps = generateCaptureSequences(cap[1]);
           for (let subCap of subCaps) sequences.push([cap, ...subCap]);
           undoMove(cap);
@@ -204,10 +207,8 @@
         for (let dir of directions[board[sq]]) {
           if (board[sq + dir] != (3-(board[sq]&3))) continue;
           if ((sq + dir*2) & 0x88) continue;
-          if (board[sq + dir*2] == 0 && board[sq + dir]) {
-            //document.getElementById(sq+dir*2).classList.add('highlight');
+          if (board[sq + dir*2] == 0 && board[sq + dir])
             captures.push([sq, (sq+dir*2), (sq+dir), board[sq], board[sq+dir]]);
-          }
         } return captures;
       }
 
@@ -245,7 +246,7 @@
         board[move[2]] = move[4];
       }
 
-      function generateMoves() {
+      function generateCaptures() {
         let moves = [];
         let srcSq, dstSq, capSq, pce, capPce;
         for (let sq = 0; sq < board.length; sq++) {
@@ -254,7 +255,17 @@
           pce = board[srcSq];
           if (!(pce & side)) continue;
           moves = generateCaptureSequences(srcSq, dstSq, capSq, pce, capPce);
-          if (move.length) return moves;
+        } return moves;
+      }
+
+      function generateQuiets() {
+        let moves = [];
+        let srcSq, dstSq, capSq, pce, capPce;
+        for (let sq = 0; sq < board.length; sq++) {
+          if (sq & 0x88) continue;
+          srcSq = sq;
+          pce = board[srcSq];
+          if (!(pce & side)) continue;
           for (let dir of directions[pce]) {
             dstSq = srcSq + dir;
             capSq = dstSq;
@@ -265,6 +276,12 @@
         } return moves;
       }
       
+      function generateMoves() {
+        let moves = generateCaptures();
+        if (moves[0].length) return moves;
+        else return generateQuiets();
+      }
+      
       function userMove(sq) {
         var clickSq = parseInt(sq, 10);
         if (!clickLock && board[clickSq]) {
@@ -272,7 +289,6 @@
             document.getElementById(clickSq).classList.remove('highlight');
           document.getElementById(clickSq).classList.add('highlight');
           legalMoves = generateMoves();
-          console.log(legalMoves)
           for (let sequence of legalMoves)
             if (clickSq == sequence[0][0]) {
               document.getElementById(sequence[0][1]).classList.add('highlight');
@@ -288,15 +304,18 @@
               let move = sequence[j];
               if (userSrc == sequence[0][0] && userDst == move[1]) {
                 makeMove(move);
+                currentSequence[move.toString()] = move;
                 drawBoard();
-                if (legalMoves[i].length == 1) { 
+                if (legalMoves[i].length == 1) {
                   side = 3 - side;
-                  clickLock = 0;
+                  let lastMove = [];
+                  for (let entry of Object.entries(currentSequence)) lastMove.push(entry[1]);
+                  gameMoves.push(lastMove);
+                  currentSequence = {};
                 }
-              } else clickLock = 0;
-              break;
+              } break;
             }
-          }
+          } clickLock = 0;
         }
       }
 
