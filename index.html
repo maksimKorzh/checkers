@@ -119,11 +119,11 @@
         
       board = [
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 2, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 2, 0, 2, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 1, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 5, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 2, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
       ];
@@ -145,6 +145,17 @@
       var gameMoves = [];
       var gameOver = 0;
       var ai = 1;
+      
+      function printBoard() {
+        let boardStr = '';
+        for (let row = 0; row < 8; row++) {
+          for (let col = 0; col < 16; col++) {
+            let sq = row * 16 + col;
+            if (sq & 0x88) continue;
+            boardStr += ' ' + ['.', 'x', 'o', '', '', 'X', 'O'][board[sq]];
+          } boardStr += '\n';
+        } console.log(boardStr);
+      }
       
       function drawBoard() {
         let boardHTML = `<table align="center" cellspacing="0" `;
@@ -175,12 +186,41 @@
         document.getElementById('buttons').style.width = (document.getElementById('board').offsetWidth) + 'px';
         //setTimeout(function() { isGameOver(); }, 200);
       } drawBoard();
+
+      function generateCaptureSequences(sq) {
+        let captures = findCaptures(sq);
+        if (captures.length == 0) return [[]];
+        let sequences = [];
+        for (let cap of captures) {
+          makeMove(cap);
+          let subCaps = generateCaptureSequences(cap[1]);
+          for (let subCap of subCaps) sequences.push([cap, ...subCap]);
+          takeBack(cap);
+        } return sequences;      
+      }
+
+      function findCaptures(sq) {
+        let captures = [];
+        for (let dir of directions[board[sq]]) {
+          if (board[sq + dir] != (3-(board[sq]&3))) continue;
+          if ((sq + dir*2) & 0x88) continue;
+          if (board[sq + dir*2] == 0 && board[sq + dir]) {
+            document.getElementById(sq+dir*2).classList.add('highlight');
+            captures.push([sq, (sq+dir*2), (sq+dir), board[sq], board[sq+dir]]);
+          }
+        } return captures;
+      }
+
+      function makeMove(move) {
+        board[move[2]] = 0;
+        board[move[1]] = move[3];
+        board[move[0]] = 0;
+      }
       
-      function generateCaptureSequence(srcSq, dstSq, capSq, pce, capPce, dir) {
-        let sequence = [];
-        dstSq = capSq + dir;
-        sequence.push([srcSq, dstSq, capSq, pce, capPce]);
-        return sequence;
+      function takeBack(move) {
+        board[move[0]] = move[3];
+        board[move[1]] = 0;
+        board[move[2]] = move[4];
       }
 
       function generateMoves() {
@@ -191,17 +231,13 @@
           srcSq = sq;
           pce = board[srcSq];
           if (!(pce & side)) continue;
+          caps = generateCaptureSequences(srcSq, dstSq, capSq, pce, capPce);
+          console.log(caps);
           for (let dir of directions[pce]) {
             dstSq = srcSq + dir;
             capSq = dstSq;
             capPce = board[capSq];
             if (board[capSq] == side || capSq & 0x88) continue;
-            if (board[capSq] == (3-side)) {
-              if ((capSq + dir) & 0x88) continue;
-              if (board[capSq + dir] == 0) moves.push(generateCaptureSequence(srcSq, dstSq, capSq, pce, capPce, dir));
-              else continue;
-            }
-            //moves.push([srcSq, dstSq, capSq, pce, capPce]);
           }
         } return moves;
       }
@@ -223,15 +259,49 @@
           userDst = clickSq;
           drawBoard();
           for (let move of legalMoves)
-            if (userSrc == move[0] && userDst == move[1]) {
-              gameMoves.push([move, side]);
-              makeMove(move);
+            if (userSrc == move[0][0] && userDst == move[0][1]) {
+              gameMoves.push([move[0], side]);
+              makeMove(move[0]);
               drawBoard();
-              //computerMove();
+              computerMove();
             }
           clickLock = 0;
         }
       }
+
+      function computerMove() {
+        return;
+        if (!ai) return;
+        setTimeout(function() {
+          /*let oldSide = side;
+          let response = search(5);
+          if (response.bestMove) {
+            gameMoves.push([response.bestMove, side]);
+            makeMove(response.bestMove);
+            if (moreCapture(response.bestMove)) side = 3 - side;
+          } else return;
+          drawBoard();
+          if (side == oldSide) computerMove();*/
+        }, 800);
+      }
+      
+      document.getElementById('undo').addEventListener('click', () => {
+        if (!gameMoves.length) return;
+        let lastMove = gameMoves[gameMoves.length-1];
+        takeBack(lastMove[0]);
+        side = lastMove[1];
+        gameMoves.pop();
+        drawBoard();
+      });
+      
+      document.getElementById('move').addEventListener('click', () => {
+        computerMove();
+      });
+      
+      document.getElementById('flip').addEventListener('click', () => {
+        flip ^= 1;
+        drawBoard();
+      });
     </script>
   </body>
 </html>
