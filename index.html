@@ -195,7 +195,7 @@
           makeMove(cap);
           let subCaps = generateCaptureSequences(cap[1]);
           for (let subCap of subCaps) sequences.push([cap, ...subCap]);
-          takeBack(cap);
+          undoMove(cap);
         } return sequences;      
       }
 
@@ -205,19 +205,41 @@
           if (board[sq + dir] != (3-(board[sq]&3))) continue;
           if ((sq + dir*2) & 0x88) continue;
           if (board[sq + dir*2] == 0 && board[sq + dir]) {
-            document.getElementById(sq+dir*2).classList.add('highlight');
+            //document.getElementById(sq+dir*2).classList.add('highlight');
             captures.push([sq, (sq+dir*2), (sq+dir), board[sq], board[sq+dir]]);
           }
         } return captures;
       }
 
+      function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+      
+      async function animateSequence(sequence) {
+        for (let move of sequence) {
+          await sleep(500);
+          makeMove(move);
+          drawBoard();
+        } side = 3 - side;
+      }
+
+      function makeSequence(sequence) {
+        for (let move of sequence) makeMove(move);
+        side = 3 - side;
+      }
+      
+      function undoSequence(sequence) {
+        for (let i = sequence.length-1; i >= 0; i--) undoMove(sequence[i]);
+        side = 3 - side;
+      }
+      
       function makeMove(move) {
         board[move[2]] = 0;
         board[move[1]] = move[3];
         board[move[0]] = 0;
       }
       
-      function takeBack(move) {
+      function undoMove(move) {
         board[move[0]] = move[3];
         board[move[1]] = 0;
         board[move[2]] = move[4];
@@ -231,17 +253,18 @@
           srcSq = sq;
           pce = board[srcSq];
           if (!(pce & side)) continue;
-          caps = generateCaptureSequences(srcSq, dstSq, capSq, pce, capPce);
-          console.log(caps);
+          moves = generateCaptureSequences(srcSq, dstSq, capSq, pce, capPce);
+          if (move.length) return moves;
           for (let dir of directions[pce]) {
             dstSq = srcSq + dir;
             capSq = dstSq;
             capPce = board[capSq];
-            if (board[capSq] == side || capSq & 0x88) continue;
+            if (board[capSq] || capSq & 0x88) continue;
+            moves.push([[srcSq, dstSq, capSq, pce, capPce]]);
           }
         } return moves;
       }
-
+      
       function userMove(sq) {
         var clickSq = parseInt(sq, 10);
         if (!clickLock && board[clickSq]) {
@@ -249,23 +272,31 @@
             document.getElementById(clickSq).classList.remove('highlight');
           document.getElementById(clickSq).classList.add('highlight');
           legalMoves = generateMoves();
-          for (let move of legalMoves)
-            if (clickSq == move[0][0]) {
-              for (let cap of move) document.getElementById(cap[1]).classList.add('highlight');
+          console.log(legalMoves)
+          for (let sequence of legalMoves)
+            if (clickSq == sequence[0][0]) {
+              document.getElementById(sequence[0][1]).classList.add('highlight');
               userSrc = clickSq;
             }
           clickLock = 1;
         } else if (clickLock) {
           userDst = clickSq;
           drawBoard();
-          for (let move of legalMoves)
-            if (userSrc == move[0][0] && userDst == move[0][1]) {
-              gameMoves.push([move[0], side]);
-              makeMove(move[0]);
-              drawBoard();
-              computerMove();
+          for (let i = 0; i < legalMoves.length; i++) {
+            let sequence = legalMoves[i];
+            for (let j = 0; j < legalMoves[i].length; j++) {
+              let move = sequence[j];
+              if (userSrc == sequence[0][0] && userDst == move[1]) {
+                makeMove(move);
+                drawBoard();
+                if (legalMoves[i].length == 1) { 
+                  side = 3 - side;
+                  clickLock = 0;
+                }
+              } else clickLock = 0;
+              break;
             }
-          clickLock = 0;
+          }
         }
       }
 
@@ -288,8 +319,7 @@
       document.getElementById('undo').addEventListener('click', () => {
         if (!gameMoves.length) return;
         let lastMove = gameMoves[gameMoves.length-1];
-        takeBack(lastMove[0]);
-        side = lastMove[1];
+        undoSequence(lastMove);
         gameMoves.pop();
         drawBoard();
       });
