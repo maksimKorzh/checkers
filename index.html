@@ -105,7 +105,7 @@
             stroke-width="6"
           />
         </svg>`;
-      
+
       var board = [
         0, 2, 0, 2, 0, 2, 0, 2,    0, 20,  0,  5,  0, 10,  0,  0,
         2, 0, 2, 0, 2, 0, 2, 0,   20,  0,  0,  0,  0,  0,-20,  0,
@@ -321,6 +321,7 @@
       }
 
       function userMove(sq) {
+        if (gameOver) return;
         var clickSq = parseInt(sq, 10);
         if (!clickLock && board[clickSq]) {
           for (let sq = 0; sq < board.length; sq++)
