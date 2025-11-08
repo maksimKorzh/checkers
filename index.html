@@ -361,14 +361,15 @@
                     side = 3 - side;
                     gameMoves.push([submove]);
                     currentSequence = {};
+                    computerMove();
                   } else if (sequence.length == 1) {
                     side = 3 - side;
                     let lastMove = [];
                     for (let entry of Object.entries(currentSequence)) lastMove.push(entry[1]);
                     gameMoves.push(lastMove);
                     currentSequence = {};
+                    computerMove();
                   } drawBoard();
-                  computerMove();
                   clickLock = 0;
                   return;
                 }
