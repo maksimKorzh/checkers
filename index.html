@@ -107,16 +107,26 @@
         </svg>`;
 
       var board = [
-        0, 2, 0, 2, 0, 2, 0, 2,  0, 5, 0, 5, 0, 5, 0, 0,
-        2, 0, 2, 0, 2, 0, 2, 0,  5, 0, 0, 0, 0, 0, 0, 0,
-        0, 2, 0, 2, 0, 2, 0, 2,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 5, 0, 5, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 5, 0, 5, 0, 0,
-        1, 0, 1, 0, 1, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 1, 0, 1, 0, 1, 0, 1,  0, 0, 0, 0, 0, 0, 0, 5,
-        1, 0, 1, 0, 1, 0, 1, 0,  0, 0, 5, 0, 5, 0, 5, 0,
+        0, 2, 0, 2, 0, 2, 0, 2,    0, 20,  0, 10,  0, 20,  0,  0,
+        2, 0, 2, 0, 2, 0, 2, 0,   10,  0,-10,  0,-10,  0,-10,  0,
+        0, 2, 0, 2, 0, 2, 0, 2,    0,-20,  0,-20,  0,-30,  0,  0,
+        0, 0, 0, 0, 0, 0, 0, 0,   10,  0, 20,  0, 50,  0, 20,  0,
+        0, 0, 0, 0, 0, 0, 0, 0,    0, 20,  0, 50,  0, 20,  0, 10,
+        1, 0, 1, 0, 1, 0, 1, 0,    0,  0,-30,  0,-20,  0,-20,  0,
+        0, 1, 0, 1, 0, 1, 0, 1,    0,-10,  0,-10,  0,-10,  0, 10,
+        1, 0, 1, 0, 1, 0, 1, 0,  -100,  0, 20,  0, 10,  0, 20,  0,
       ];
       
+      board = [
+        0, 0, 0, 0, 0, 0, 0, 0,    0, 20,  0, 10,  0, 20,  0,  0,
+        0, 0, 0, 0, 0, 0, 0, 0,   10,  0,-10,  0,-10,  0,-10,  0,
+        0, 0, 0, 0, 0, 0, 0, 0,    0,-20,  0,-20,  0,-30,  0,  0,
+        0, 0, 0, 0, 0, 0, 0, 0,   10,  0, 20,  0, 50,  0, 20,  0,
+        0, 0, 0, 0, 0, 0, 0, 0,    0, 20,  0,  0,  0, 20,  0, 10,
+        1, 0, 1, 0, 1, 0, 1, 0,    0,  0,-30,  0,-20,  0,-20,  0,
+        0, 1, 0, 1, 0, 1, 0, 1,    0,-10,  0,-10,  0,-10,  0, 10,
+        1, 0, 1, 0, 1, 0, 1, 0,  -100,  0, 20,  0, 10,  0, 20,  0,
+      ];
       var directions = [
           [],
           [-15, -17],
@@ -126,7 +136,7 @@
           [-15, -17, 15, 17],
       ];
 
-      var pieceScores = [0, 10, -10, 0, 0, 20, -20];
+      var pieceScores = [0, 100, -100, 0, 0, 200, -200];
       
       var side = 1;
       var clickLock = 0;
@@ -293,6 +303,7 @@
           if (depth === 0) return evaluate();
           let bestScore = -Infinity;
           var moves = generateMoves();
+          if (moves.length == 1 && moves[0].length == 1 && moves[0][0].length == 0) return -99999 + depth;
           if (depth == originalDepth) {
             if (moves[0][0].length > 1 &&  !moves[0][0][0][4] && moves[0][0][0][1] != moves[0][0][1][0]) {
               let quiets = [];
@@ -305,7 +316,6 @@
             for (let sequence of move) {
               if (!sequence.length) continue;
               makeSequence(sequence);
-              if (sequence[0] == 101 && sequence[1] == 116) printBoard();
               let score = -negamax(depth - 1, -beta, -alpha);
               undoSequence(sequence);
               if (score > bestScore) {
@@ -373,10 +383,10 @@
       function computerMove() {
         if (!ai) return;
         setTimeout(function() {
-          let bestCapture = search(5);
+          let bestCapture = search(10);
           if (bestCapture.bestMove && bestCapture.bestMove.length) {
             gameMoves.push(bestCapture.bestMove);
-            makeSequence(bestCapture.bestMove);
+            animateSequence(bestCapture.bestMove);
           } else return;
           drawBoard();
         }, 100);
