@@ -188,7 +188,7 @@
         } boardHTML+= '</table>';
         document.getElementById('board').innerHTML = boardHTML;
         document.getElementById('buttons').style.width = (document.getElementById('board').offsetWidth) + 'px';
-        //setTimeout(function() { isGameOver(); }, 200);
+        setTimeout(function() { isGameOver(); }, 200);
       } drawBoard();
 
       function generateCaptureSequences(sq) {
@@ -309,6 +309,7 @@
               let quiets = [];
               for (let move of moves[0][0]) quiets.push([[move]]);
               moves = quiets;
+              bestMove = moves[0][0];
             }
           }
           for (let move of moves) {
@@ -383,12 +384,25 @@
         if (!ai) return;
         setTimeout(function() {
           let bestCapture = search(5);
-          if (bestCapture.bestMove.length) {
+          if (bestCapture.bestMove && bestCapture.bestMove.length) {
             gameMoves.push(bestCapture.bestMove);
             makeSequence(bestCapture.bestMove);
           } else return;
           drawBoard();
         }, 100);
+      }
+      
+      function isGameOver() {
+        if (gameOver) return;
+        let white = 0;
+        let red = 0;
+        for (let sq = 0; sq < board.length; sq++) {
+          if (board[sq] & 0x88) continue;
+          if ((board[sq]&3) == 1) red += 1;
+          if ((board[sq]&3) == 2) white += 1;
+        }
+        if (!white) { gameOver = 1; alert('Red won!'); }
+        if (!red) { gameOver = 1; alert('White won!'); }
       }
       
       document.getElementById('undo').addEventListener('click', () => {
