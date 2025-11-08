@@ -117,16 +117,16 @@
         1, 0, 1, 0, 1, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
       ];
         
-      /*board = [
-        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 2, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+      board = [
+        0, 0, 0, 0, 0, 0, 0, 2,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 2, 0, 2, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 1, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-      ];*/
+      ];
       
       var directions = [
           [],
@@ -146,6 +146,7 @@
       var currentSequence = {};
       var gameOver = 0;
       var ai = 1;
+      var capPly = 0;
       
       function printBoard() {
         let boardStr = '';
@@ -189,19 +190,19 @@
       } drawBoard();
 
       function generateCaptureSequences(sq) {
-        let captures = findCaptures(sq);
+        let captures = findCaptures(sq, board[sq]);
         if (captures.length == 0) return [[]];
         let sequences = [];
         for (let cap of captures) {
-          //if ([1, 3, 5, 7, 112, 114, 116, 118].includes(cap[0]) && pce < 5) return [[]];
-          makeMove(cap);
+          makeMove(cap); capPly++;
           let subCaps = generateCaptureSequences(cap[1]);
           for (let subCap of subCaps) sequences.push([cap, ...subCap]);
-          undoMove(cap);
+          undoMove(cap); capPly--;
         } return sequences;      
       }
 
-      function findCaptures(sq) {
+      function findCaptures(sq, pce) {
+        if ([1, 3, 5, 7, 112, 114, 116, 118].includes(sq) && pce > 2 && capPly) return [];
         let captures = [];
         for (let dir of directions[board[sq]]) {
           if ((board[sq + dir]&3) != (3-(board[sq]&3))) continue;
@@ -292,6 +293,7 @@
             document.getElementById(clickSq).classList.remove('highlight');
           document.getElementById(clickSq).classList.add('highlight');
           legalMoves = generateMoves();
+          console.log(legalMoves)
           for (let move of legalMoves) {
             for (let sequence of move) {
               for (let submove of sequence) {
