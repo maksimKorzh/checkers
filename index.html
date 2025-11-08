@@ -136,6 +136,8 @@
           [-15, -17, 15, 17],
           [-15, -17, 15, 17],
       ];
+
+      var pieceScores = [0, 10, -10, 0, 0, 20, -20];
       
       var side = 1;
       var clickLock = 0;
@@ -286,6 +288,15 @@
         } return generateQuiets();
       }
       
+       function evaluate() {
+        let score = 0;
+        for (let sq = 0; sq < board.length; sq++) {
+          if (board[sq] & 0x88) continue;
+          score += pieceScores[board[sq]];
+          // pst
+        } return (side == 1) ? score : -score
+      }
+      
       function userMove(sq) {
         var clickSq = parseInt(sq, 10);
         if (!clickLock && board[clickSq]) {
@@ -293,7 +304,6 @@
             document.getElementById(clickSq).classList.remove('highlight');
           document.getElementById(clickSq).classList.add('highlight');
           legalMoves = generateMoves();
-          console.log(legalMoves)
           for (let move of legalMoves) {
             for (let sequence of move) {
               for (let submove of sequence) {
