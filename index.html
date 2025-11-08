@@ -117,16 +117,16 @@
         1, 0, 1, 0, 1, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
       ];
         
-      board = [
+      /*board = [
         0, 0, 0, 0, 0, 0, 0, 2,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 2, 0, 2, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 2, 0, 2, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 1, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-      ];
+        0, 1, 0, 0, 0, 2, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 1, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+      ];*/
       
       var directions = [
           [],
@@ -288,7 +288,7 @@
         } return generateQuiets();
       }
       
-       function evaluate() {
+      function evaluate() {
         let score = 0;
         for (let sq = 0; sq < board.length; sq++) {
           if (board[sq] & 0x88) continue;
@@ -297,6 +297,39 @@
         } return (side == 1) ? score : -score
       }
       
+      function search(depth, alpha = -Infinity, beta = Infinity) {
+        let bestMove = null;
+        const originalDepth = depth;
+        function negamax(depth, alpha, beta) {
+          if (depth === 0) return evaluate();
+          let bestScore = -Infinity;
+          var moves = generateMoves();
+          if (depth == originalDepth) {
+            if (moves[0][0].length > 1 &&  !moves[0][0][0][4] && moves[0][0][0][1] != moves[0][0][1][0]) {
+              let quiets = [];
+              for (let move of moves[0][0]) quiets.push([[move]]);
+              moves = quiets;
+            }
+          }
+          for (let move of moves) {
+            for (let sequence of move) {
+              if (!sequence.length) continue;
+              makeSequence(sequence);
+              if (sequence[0] == 101 && sequence[1] == 116) printBoard();
+              let score = -negamax(depth - 1, -beta, -alpha);
+              undoSequence(sequence);
+              if (score > bestScore) {
+                bestScore = score;
+                if (depth === originalDepth) bestMove = sequence;
+              } alpha = Math.max(alpha, bestScore);
+              if (alpha >= beta) break;
+            }
+          } return bestScore;
+        }
+        const bestScore = negamax(depth, alpha, beta);
+        return { bestScore, bestMove };
+      }
+
       function userMove(sq) {
         var clickSq = parseInt(sq, 10);
         if (!clickLock && board[clickSq]) {
@@ -346,19 +379,15 @@
       }
 
       function computerMove() {
-        return;
         if (!ai) return;
         setTimeout(function() {
-          /*let oldSide = side;
-          let response = search(5);
-          if (response.bestMove) {
-            gameMoves.push([response.bestMove, side]);
-            makeMove(response.bestMove);
-            if (moreCapture(response.bestMove)) side = 3 - side;
+          let bestCapture = search(5);
+          if (bestCapture.bestMove.length) {
+            gameMoves.push(bestCapture.bestMove);
+            makeSequence(bestCapture.bestMove);
           } else return;
           drawBoard();
-          if (side == oldSide) computerMove();*/
-        }, 800);
+        }, 100);
       }
       
       document.getElementById('undo').addEventListener('click', () => {
