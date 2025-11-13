@@ -1,11 +1,11 @@
 # Checkers in JS
-A bare minimum program to play the game of checkers<br>
+A bare minimum program to play the game of checkers:<br>
 <a href="https://maksimkorzh.github.io/american-checkers/">Play American checkers</a><br>
 <a href="https://maksimkorzh.github.io/american-checkers/">Play Russian draughts</a>
 
 # Features
  - 0x88 board representation
- - Brute force negamax + quiescence 7 ply fixed depth search
+ - Brute force 7 ply fixed depth negamax + quiescence search
  - Evaluation function counts material score + positional values
  - American/Russian rule sets
  - Own web based GUI
@@ -14,9 +14,9 @@ A bare minimum program to play the game of checkers<br>
 
 # Estimated strength
 Beats Linux QCheckers app in both variants.
-From the human perspective Russian variant is probably slightly stronger
-because of its sharp tactical shots.
+From the human perspective Russian variant feels slightly stronger
+because of the sharp tactical shots.
 
 # Limitations
- - weak endgame, especially for american variant
+ - weak endgame, especially for American variant
  - quite dumb positionally, essentially it only tries to occupy C5/F4 squares
