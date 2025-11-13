@@ -252,12 +252,9 @@
 
       function generateCaptures() {
         let moves = [];
-        let srcSq, dstSq, capSq, pce, capPce;
         for (let sq = 0; sq < board.length; sq++) {
           if (sq & 0x88) continue;
-          srcSq = sq;
-          pce = board[srcSq];
-          if (!(pce & side)) continue;
+          if (!(board[sq] & side)) continue;
           moves.push(generateCaptureSequences(sq));
         } return moves;
       }
