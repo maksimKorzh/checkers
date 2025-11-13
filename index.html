@@ -109,10 +109,10 @@
       var board = [
         0, 2, 0, 2, 0, 2, 0, 2,   0, 0, 0, 0, 0, 0, 0, 0,
         2, 0, 2, 0, 2, 0, 2, 0,   0, 0, 0, 0, 0, 0, 0, 0,
-        0, 2, 0, 2, 0, 2, 0, 2,   0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
-        1, 0, 1, 0, 1, 0, 1, 0,   0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2, 0, 2, 0, 2, 0, 2,   0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 9, 0, 9, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 9, 0, 9, 0, 0,
+        1, 0, 1, 0, 1, 0, 1, 0,   0, 0, 5, 0, 5, 0, 5, 0,
         0, 1, 0, 1, 0, 1, 0, 1,   0, 0, 0, 0, 0, 0, 0, 0,
         1, 0, 1, 0, 1, 0, 1, 0,   0, 0, 0, 0, 0, 0, 0, 0,
       ];
@@ -126,7 +126,7 @@
           [-15, -17, 15, 17],
       ];
 
-      var pieceScores = [0, 3, -3, 0, 0, 6, -6];
+      var pieceScores = [0, 200, -200, 0, 0, 400, -400];
       
       var side = 1;
       var clickLock = 0;
@@ -294,11 +294,9 @@
         for (let sq = 0; sq < board.length; sq++) {
           if (sq & 0x88 || !board[sq]) continue;
           score += pieceScores[board[sq]];
-        }
-        
-        //printBoard()
-        //console.log(score)
-        return (side == 1) ? score : -score
+          if ((board[sq]&3) == 1) score += board[sq+8];
+          if ((board[sq]&3) == 2) score -= board[sq+8];
+        } return (side == 1) ? score : -score
       }
       
       function search(depth) {
@@ -323,25 +321,22 @@
         }
         
         function negamax(depth) {
-          if (depth === 0) return evaluate();//quiescence();
+          if (depth === 0) return quiescence();
           let bestScore = -Infinity;
           var moves = generateMoves();
           if (moves.length == 1 && moves[0].length == 1 && moves[0][0].length == 0) return -99999 + depth;
-          //if (depth == originalDepth) {
-            if (moves[0][0].length > 1 &&  !moves[0][0][0][4] && moves[0][0][0][1] != moves[0][0][1][0]) {
-              let quiets = [];
-              for (let move of moves[0][0]) quiets.push([[move]]);
-              moves = quiets;
-              //console.log('quiets:', quiets)
-            }
-          //}
+          if (moves[0][0].length > 1 &&  !moves[0][0][0][4] && moves[0][0][0][1] != moves[0][0][1][0]) {
+            let quiets = [];
+            for (let move of moves[0][0]) quiets.push([[move]]);
+            moves = quiets;
+          }
           for (let move of moves) {
             for (let sequence of move) {
               if (!sequence.length) continue;
-              makeSequence(sequence); //console.log('makeMove:', moveToString(sequence[0])); printBoard(); alert();
+              makeSequence(sequence);
               let score = -negamax(depth - 1);
               if (depth == originalDepth) console.log(moveToString(sequence[0]) + ":", score);
-              undoSequence(sequence); //console.log('takeBack'); printBoard(); alert();
+              undoSequence(sequence);
               if (score > bestScore) {
                 bestScore = score;
                 if (depth === originalDepth) bestMove = sequence;
@@ -400,9 +395,7 @@
                 }
               }
             }
-          }
-          //drawBoard();
-          clickLock = 0;
+          } clickLock = 0;
         }
       }
 
@@ -414,7 +407,6 @@
             gameMoves.push(computerMove.bestMove);
             animateSequence(computerMove.bestMove);
           } else return;
-          //drawBoard();
         }, 100);
       }
       
