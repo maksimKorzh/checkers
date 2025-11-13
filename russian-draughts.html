@@ -135,7 +135,7 @@
         0, 0, 0, 0, 2, 0, 0, 0,   0, 0, 9, 0, 9, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 9, 0, 9, 0, 0,
         0, 0, 2, 0, 0, 0, 0, 0,   0, 0, 5, 0, 5, 0, 5, 0,
-        0, 1, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
+        0, 5, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
       ];*/
       
@@ -202,19 +202,19 @@
         setTimeout(function() { isGameOver(); }, 200);
       } drawBoard();
 
-      function generateCaptureSequences(sq) {
-        let captures = findCaptures(sq);
+      function generateCaptureSequences(sq, pce) {
+        let captures = (pce < 5) ? findManCaptures(sq) : findKingCaptures(sq);
         if (captures.length == 0) return [[]];
         let sequences = [];
         for (let cap of captures) {
           makeMove(cap); capPly++;
-          let subCaps = generateCaptureSequences(cap[1]);
+          let subCaps = generateCaptureSequences(cap[1], pce);
           for (let subCap of subCaps) sequences.push([cap, ...subCap]);
           undoMove(cap); capPly--;
         } return sequences;      
       }
 
-      function findCaptures(sq) {
+      function findManCaptures(sq) {
         let captures = [];
         for (let dir of directions[(board[sq]|4)]) {
           if ((board[sq + dir]&3) != (3-(board[sq]&3))) continue;
@@ -224,6 +224,24 @@
         } return captures;
       }
 
+      function findKingCaptures(sq) {
+        let captures = [];
+        let pce = board[sq];
+        let color = pce & 3;
+        for (let dir of directions[pce]) {
+          let s = sq + dir;
+          while (!(s & 0x88) && board[s] == 0) s += dir;
+          if (!(s & 0x88) && (board[s] & 3) == (3 - color)) {
+            let enemySq = s;
+            s += dir;
+            while (!(s & 0x88) && board[s] == 0) {
+              captures.push([sq, s, enemySq, pce, board[enemySq]]);
+              s += dir;
+            }
+          }
+        } return captures;
+      }
+      
       function moveToString(move) {
         function indexToCoords(i) {
           let r = 7-Math.floor(i/16)+1;
@@ -274,13 +292,10 @@
 
       function generateCaptures() {
         let moves = [];
-        let srcSq, dstSq, capSq, pce, capPce;
         for (let sq = 0; sq < board.length; sq++) {
           if (sq & 0x88) continue;
-          srcSq = sq;
-          pce = board[srcSq];
-          if (!(pce & side)) continue;
-          moves.push(generateCaptureSequences(sq, pce));
+          if (!(board[sq] & side)) continue;
+          moves.push(generateCaptureSequences(sq, board[sq]));
         } return moves;
       }
 
