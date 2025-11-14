@@ -18,7 +18,7 @@ From the human perspective Russian variant feels slightly stronger
 because of the sharp tactical shots.
 <br>
 <br>
-<strong>Программа играет не меньше чем на 1250 Elo на playok, для
+<strong>Программа русские шашки играет не меньше чем на 1250 Elo на playok, для
 сравнения у блогера Владимира Вахтёрова (1 разряд) там рейтинг 1200,
 то есть программа должна играть примерно на уровне 1-го разряда.</strong>
 
