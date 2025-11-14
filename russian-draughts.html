@@ -370,6 +370,7 @@
       }
 
       function userMove(sq) {
+        drawBoard();
         if (gameOver) return;
         var clickSq = parseInt(sq, 10);
         if (!clickLock && board[clickSq]) {
