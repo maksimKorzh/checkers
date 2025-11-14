@@ -16,6 +16,10 @@ A bare minimum program to play the game of checkers:<br>
 Beats Linux QCheckers app in both variants.
 From the human perspective Russian variant feels slightly stronger
 because of the sharp tactical shots.
+<br>
+Программа играет не меньше чем на 1250 Elo на playok, для
+сравнения у блогера Владимира Вахтёрова (1 разряд) там рейтинг 1200,
+то есть программа должна играть примерно на уровне 1-го разряда.
 
 # Limitations
  - weak endgame, especially for American variant
