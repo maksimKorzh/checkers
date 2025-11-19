@@ -25,3 +25,4 @@ because of the sharp tactical shots.
 # Limitations
  - weak endgame, especially for American variant
  - quite dumb positionally, essentially it only tries to occupy C5/F4 squares
+ - Russian variant doesn't handle complicated captures properly, e.g. Turkish strike
