@@ -1,7 +1,9 @@
 # Checkers in JS
 A bare minimum program to play the game of checkers:<br>
 <a href="https://maksimkorzh.github.io/checkers/american-checkers.html">Play American checkers</a><br>
-<a href="https://maksimkorzh.github.io/checkers/russian-draughts.html">Play Russian draughts</a>
+<a href="https://maksimkorzh.github.io/checkers/russian-draughts.html">Play Russian draughts</a><br>
+<br>
+I also have more advanced Russian draughts engine <a href="https://github.com/maksimKorzh/vakhtan">Vakhtan</a>
 
 # Features
  - 0x88 board representation
